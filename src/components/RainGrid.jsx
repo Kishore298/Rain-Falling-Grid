@@ -18,6 +18,8 @@ const RainGrid = ({ rows = 15, columns = 20 }) => {
   const [grid, setGrid] = useState([]);
   const [currentColorIndex, setCurrentColorIndex] = useState(0);
   const [fallCount, setFallCount] = useState(0);
+  const [isFalling, setIsFalling] = useState(true);  // Track whether the rain is falling
+  const [intervalId, setIntervalId] = useState(null); // Store interval ID for clearing
 
   // Initialize empty grid
   useEffect(() => {
@@ -25,15 +27,14 @@ const RainGrid = ({ rows = 15, columns = 20 }) => {
     setGrid(initialGrid);
   }, [rows, columns]);
 
-  // Raindrop effect
+  // Raindrop effect with fall and stop functionality
   useEffect(() => {
-    if (fallCount >= 20) { 
-      setFallCount(0);
-      setCurrentColorIndex((prevIndex) => (prevIndex + 1) % colorSequence.length);
+    if (!isFalling) {
+      if (intervalId) clearInterval(intervalId); // Stop falling when isFalling is false
       return;
     }
 
-    const intervalId = setInterval(() => {
+    const newIntervalId = setInterval(() => {
       setGrid((prevGrid) => {
         const newGrid = prevGrid.map((row) => row.slice()); // Create a copy of the grid
 
@@ -78,10 +79,16 @@ const RainGrid = ({ rows = 15, columns = 20 }) => {
 
       // Update the fall count
       setFallCount((prevCount) => prevCount + 1);
-    }, 200); 
+      if (fallCount >= 20) { 
+        setFallCount(0);
+        setCurrentColorIndex((prevIndex) => (prevIndex + 1) % colorSequence.length);
+      }
+    }, 200);
 
-    return () => clearInterval(intervalId);
-  }, [currentColorIndex, fallCount, rows, columns]);
+    setIntervalId(newIntervalId); // Save interval ID
+
+    return () => clearInterval(newIntervalId); // Cleanup interval on component unmount
+  }, [isFalling, currentColorIndex, fallCount, rows, columns]);
 
   // Animation for the falling letters
   const text = "Falling Rain Grids"; // Text to animate
@@ -128,8 +135,24 @@ const RainGrid = ({ rows = 15, columns = 20 }) => {
       <div className="absolute bottom-10 text-white text-center text-xl sm:text-2xl">
         <p>Enjoy the vibrant, falling rain animation!</p>
       </div>
+      <div className="absolute bottom-20 space-x-4">
+        <button
+          className="bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-700"
+          onClick={() => setIsFalling(false)} 
+        >
+          Stop
+        </button>
+        <button
+          className="bg-green-500 text-white px-4 py-2 rounded-md hover:bg-green-700"
+          onClick={() => setIsFalling(true)} 
+        >
+          Fall
+        </button>
+      </div>
     </div>
   );
 };
+
 export default RainGrid;
+
 
